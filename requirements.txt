@@ -2,4 +2,3 @@ streamlit
 git+https://github.com/streamlit/gsheets-connection
 numpy
 pandas
-time
