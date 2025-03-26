@@ -3,3 +3,4 @@ git+https://github.com/streamlit/gsheets-connection
 numpy
 pandas
 openai
+json
