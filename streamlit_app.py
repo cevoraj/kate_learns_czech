@@ -5,15 +5,18 @@ from streamlit_gsheets import GSheetsConnection
 from openai import OpenAI
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 # Define the scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Load credentials from the JSON key file
-creds = ServiceAccountCredentials.from_json_keyfile_name('.streamlit/gcp_creds.json', scope)
+def namespace_to_dict(namespace):
+    return {k: v for k, v in vars(namespace).items()}
+
+gcpCreds = st.secrets["gcp"]
 
 # Authorize the client
-client = gspread.authorize(creds)
+client = gspread.service_account_from_dict(gcpCreds)
 
 # Open the Google Sheet
 sheet = client.open('Slovnicek').sheet1
