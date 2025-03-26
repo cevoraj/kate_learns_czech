@@ -3,4 +3,5 @@ git+https://github.com/streamlit/gsheets-connection
 numpy
 pandas
 openai
-json
+gspread 
+oauth2client
