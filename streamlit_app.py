@@ -7,6 +7,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 
+
 # Define the scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
@@ -95,11 +96,12 @@ def getTranslation(text,direction="cs-en"):
 
 with tab1:
 
-
     if "sampleWord" not in st.session_state:
         st.session_state["sampleWord"] = sample()
     if "state" not in st.session_state:
         st.session_state["state"] = "init"
+    if "example" not in st.session_state:
+        st.session_state["example"] = ""
     
 
 
@@ -114,44 +116,45 @@ with tab1:
         st.session_state["example"] = example
         st.session_state["state"] = "example"
     
-    if st.session_state["state"] == "example":
+    if st.session_state["state"] == "example" or st.session_state["state"] == "answer":
         st.write(st.session_state["example"])
         
 
         
     if st.button("Ukaž odpověd"):
-        st.write(st.session_state["sampleWord"][0]["English"].values[0])
-        
         if st.session_state["state"] == "example":
-            
-            st.write(getTranslation(st.session_state["example"]))
-        
+            st.session_state["exampleTranslated"] = getTranslation(st.session_state["example"])
+        else:
+            st.session_state["exampleTranslated"] = ""
         st.session_state["state"] = "answer"
+    
+    if  st.session_state["state"] == "answer" or st.session_state["state"] == "feedback":
+        st.write(st.session_state["sampleWord"][0]["English"].values[0])
+        st.write(st.session_state["exampleTranslated"])
 
     if st.button("Dobře"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
-        
+        st.audio("./happy.mp3",autoplay=True)
+        st.session_state["state"] = "feedback"
 
-        st.session_state["state"] = "init"
     if st.button("Špatně"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
-        
-
-        st.session_state["state"] = "init"
+        st.audio("./unhappy.mp3",autoplay=True)
+        st.session_state["state"] = "feedback"
     
 
     
 with tab2:
-    pass
-
     if "sampleWord" not in st.session_state:
         st.session_state["sampleWord"] = sample()
     if "state2" not in st.session_state:
         st.session_state["state2"] = "init"
+    if "example" not in st.session_state:
+        st.session_state["example"] = ""
     
-    
+
 
     if st.button("New word"):
         st.session_state["sampleWord"] = sample()
@@ -159,21 +162,40 @@ with tab2:
 
     st.write(st.session_state["sampleWord"][0]["English"].values[0])
 
-        
-    if st.button("Show answer") or st.session_state["state2"] == "answer":
-        
-        st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
-        
-        st.session_state["state2"] = "answer"
-
-
-
     if st.button("Show example"):
-        example = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
-        st.write(example)
+        example = getExample(st.session_state["sampleWord"][0]["English"].values[0])
         st.session_state["example"] = example
+        st.session_state["state2"] = "example"
+    
+    if st.session_state["state2"] == "example" or st.session_state["state"] == "answer":
+        st.write(st.session_state["example"])
+        
+
+        
+    if st.button("Show answer"):
+        if st.session_state["state2"] == "example":
+            st.session_state["exampleTranslated"] = getTranslation(st.session_state["example"])
+        else:
+            st.session_state["exampleTranslated"] = ""
         st.session_state["state2"] = "answer"
-        st.write(getTranslation(st.session_state["example"]))
+    
+    if  st.session_state["state2"] == "answer" or st.session_state["state"] == "feedback":
+        st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
+        st.write(st.session_state["exampleTranslated"])
+
+    if st.button("Correct"):
+        df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
+        updateSheet(df,sheet)
+        st.audio("./happy.mp3",autoplay=True)
+        st.session_state["state2"] = "feedback"
+
+    if st.button("Wrong"):
+        df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
+        updateSheet(df,sheet)
+        st.audio("./unhappy.mp3",autoplay=True)
+        st.session_state["state2"] = "feedback"
+    
+
 
     
        
