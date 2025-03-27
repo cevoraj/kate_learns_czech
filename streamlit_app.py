@@ -29,9 +29,6 @@ df = pd.DataFrame(sheet.get_all_records())
 
 
 
-
-
-
 def updateSheet(df,sheet):
     # Convert DataFrame to a list of lists
     data = [df.columns.values.tolist()] + df.values.tolist()
@@ -55,7 +52,27 @@ client = OpenAI(api_key=api_key)
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-4o"
 
-tab1, tab2, tab3, tab4 = st.tabs(["Česky-Anglicky", "Anglicky-Česky", "Věty", "Přidat slovíčko"])
+
+def getDeclination(word):
+    message = client.chat.completions.create(
+        model=st.session_state["openai_model"],
+        messages=[
+            {"role": "user", "content": f"Napiš mi jednoduchou českou větu která užívá slovo {word}. Slovo {word} se v ní ale nesmí ve výsledku oběvit, musí být nahrazené podtržítky. Věta by měla mít maximálně 8 slov a  měla by jen používat jednoduché gramatické koncepty vhodné pro studenta českého jazyku na úrovní A2. Slovo {word} musí být nahrazeno podtržítky. Věta by měla být ukonšena tečkou. Za větou musí být středník. Po středníku musí následovat čtyři různé skloňování nebo časování slova {word} v češtině, každé oddělené dalším středníkem. První ze čtyř musí být to správné v kontextu dané věty, zbývající musí být pořád slovo {word} ale ve špatném skloňování nebo časování. Po tom co ty alternativy vytvoříš, zkontroluj že jsou opravdu všechny špatně, pouze první možnost smí být správně. Na konci možností nesmi být tečka."},
+        ],
+    )
+    txt = message.choices[0].message.content
+    sentence = txt.split(";")[0]
+    options = txt.split(";")[1:]
+    return sentence, options
+
+def randomiseOptions(options):
+    options = np.array(options)
+    #randomise options, but also provide the original index as a list
+    indices = np.random.permutation(4)
+    return options[indices]
+
+
+tab1, tab2, tab3, tab4 = st.tabs(["Česky-Anglicky", "Anglicky-Česky", "Skloňování", "Přidat slovíčko"])
 
 def sample():
     #pick a (semi) random word
@@ -201,13 +218,46 @@ with tab2:
        
 
 with tab3:
-    st.write("Tis ain't working yet")
+    answer = ""
+   
+
+
+    if "sampleWord" not in st.session_state:
+        st.session_state["sampleWord"] = sample()
+    if "sentence" not in st.session_state:
+        st.session_state["sampleWord"] = sample()
+        sentence, options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0])
+        optionsRandomised = randomiseOptions(options)
+        st.session_state["sentence"] = sentence
+        #st.session_state["translation"] = getTranslation(st.session_state["sentence"],"cs-en")
+        st.session_state["options"] = options
+        st.session_state["optionsRandomised"] = np.append(optionsRandomised,"vyber možnost")
+    
+
     if st.button("Nová věta"):
-        smpl = sample()
-        st.write(smpl[1])
-        st.write(smpl[0]["Czech"])
-        df["probability"].loc[smpl[1]] += 1
-        updateSheet(df,sheet)
+        st.session_state["sampleWord"] = sample()
+        sentence, options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0])
+        optionsRandomised = randomiseOptions(options)
+        st.session_state["sentence"] = sentence
+        #st.session_state["translation"] = getTranslation(st.session_state["sentence"],"cs-en")
+        st.session_state["options"] = options
+        st.session_state["optionsRandomised"] = np.append(optionsRandomised,"vyber možnost")
+        st.session_state["state3"] = "new"
+    
+    answer = st.radio(st.session_state["sentence"],st.session_state["optionsRandomised"],index=4)
+
+    
+    if answer == st.session_state["options"][0]:
+        st.write("✅ Correct!")
+        #st.write(st.session_state["translation"])        
+        st.audio("./happy.mp3",autoplay=True)
+    elif answer == "vyber možnost":
+        pass
+    else:
+        st.write("❌ Try again.")
+        #st.write(st.session_state["translation"])  
+        st.audio("./unhappy.mp3",autoplay=True)
+
 
 
 with tab4:
