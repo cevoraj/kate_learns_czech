@@ -52,26 +52,33 @@ client = OpenAI(api_key=api_key)
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-4o"
 
-
-def getDeclination(word):
+def ask(txt):
     message = client.chat.completions.create(
         model=st.session_state["openai_model"],
         messages=[
-            {"role": "user", "content": f"Napiš mi jednoduchou českou větu která užívá slovo {word}. Slovo {word} se v ní ale nesmí ve výsledku oběvit, musí být nahrazené podtržítky. Věta by měla mít maximálně 8 slov a  měla by jen používat jednoduché gramatické koncepty vhodné pro studenta českého jazyku na úrovní A2. Slovo {word} musí být nahrazeno podtržítky. Věta by měla být ukonšena tečkou. Za větou musí být středník. Po středníku musí následovat čtyři různé skloňování nebo časování slova {word} v češtině, každé oddělené dalším středníkem. První ze čtyř musí být to správné v kontextu dané věty, zbývající musí být pořád slovo {word} ale ve špatném skloňování nebo časování. Po tom co ty alternativy vytvoříš, zkontroluj že jsou opravdu všechny špatně, pouze první možnost smí být správně. Na konci možností nesmi být tečka."},
+            {"role": "user", "content": txt},
         ],
     )
-    txt = message.choices[0].message.content
-    sentence = txt.split(";")[0]
-    options = txt.split(";")[1:]
-    return sentence, options
+    return message.choices[0].message.content
+
+def getDeclination(word,sentence):
+    txt = ask(f" v této větě: '{sentence}'. Je použito slovo '{word}'. Vygeneruj tři alternativní skloňování nebo časování tohoto slova, které budou v kontextu vět špatně. Ve své odpovědi uveď prvně správné znění slova (tak jak bylo správně použito, ale bez zbytku věty), pak středník a potom ty tři špatné skloňování nebo časování také oddělené středníkem.")
+    txt = txt.replace(".","")
+    options = txt.split(";")
+    return options
+
+def explainDeclination(sentence, word):
+    return ask(f"V této větě: '{sentence}'. Je použito slovo '{word}'. Vysvětli proč je toto slovo v této větě použito v tomto tvaru. Vysvětli Anglicky jaké gramatické pravidlo se zde uplatňuje a proč. Use English. Keep your explanation succint, max 20 words.")
+
+def blankWordOut(sentence,word):
+    return ask(f"Ve větě '{sentence}' je použito slovo '{word}'. Nahraď celé toto slovo (včetně potenciálního skloňování nebo časování) podtržítky. Nevracej žádný jiný text než větu s podtržítky místo původního slova.")
 
 def randomiseOptions(options):
     options = np.array(options)
-    #randomise options, but also provide the original index as a list
     indices = np.random.permutation(4)
     return options[indices]
 
-
+#st.write(ask("Ve věťe 'Ukaž kozy.' je použito slovo 'koza'. Nahraď celé toto slovo (včetně potenciálního skloňování nebo časování) podtržítky."))
 tab1, tab2, tab3, tab4 = st.tabs(["Česky-Anglicky", "Anglicky-Česky", "Skloňování", "Přidat slovíčko"])
 
 def sample():
@@ -80,35 +87,13 @@ def sample():
     return smpl, smpl.index 
 
 def getExample(word):
-    global fullExample
-
-    message = client.chat.completions.create(
-        model=st.session_state["openai_model"],
-        messages=[
-            {"role": "user", "content": f"Napiš mi jednoduchou českou větu která užívá slovo {word}. Věta by měla mít maximálně 8 slov a  měla by jen používat jednoduché gramatické koncepty vhodné pro studenta českého jazyku na úrovní B1. Slovo {word} by mělo být podtrženo markdownem."},
-        ],
-    )
-    return message.choices[0].message.content
+    return ask(f"Napiš mi jednoduchou českou větu která užívá slovo '{word}'. Věta by měla mít maximálně 8 slov a  měla by jen používat jednoduché gramatické koncepty vhodné pro studenta českého jazyku na úrovní B1. Slovo '{word}' by mělo být podtrženo markdownem.")
 
 def getTranslation(text,direction="cs-en"):
-
     if direction == "cs-en":
-        message = client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": "user", "content": f"Přelož mi tuto větu do angličtiny: {text}"},
-            ],
-        )
+        return ask(f"Přelož mi tuto větu do angličtiny: '{text}'")
     else:
-        message = client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": "user", "content": f"Přelož mi tuto větu do češtiny: {text}"},
-            ],
-        )
- 
-        
-    return message.choices[0].message.content
+        return ask(f"Přelož mi tuto větu do češtiny: '{text}'")
             
 
 with tab1:
@@ -116,7 +101,7 @@ with tab1:
     if "sampleWord" not in st.session_state:
         st.session_state["sampleWord"] = sample()
     if "state" not in st.session_state:
-        st.session_state["state"] = "init"
+        st.session_state["state"] = "new"
     if "example" not in st.session_state:
         st.session_state["example"] = ""
     
@@ -152,12 +137,14 @@ with tab1:
     if st.button("Dobře"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
+        st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
 
     if st.button("Špatně"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
+        st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
     
@@ -178,37 +165,26 @@ with tab2:
         st.session_state["state2"] = "new"
 
     st.write(st.session_state["sampleWord"][0]["English"].values[0])
-
-    if st.button("Show example"):
-        example = getExample(st.session_state["sampleWord"][0]["English"].values[0])
-        st.session_state["example"] = example
-        st.session_state["state2"] = "example"
-    
-    if st.session_state["state2"] == "example" or st.session_state["state"] == "answer":
-        st.write(st.session_state["example"])
-        
-
         
     if st.button("Show answer"):
-        if st.session_state["state2"] == "example":
-            st.session_state["exampleTranslated"] = getTranslation(st.session_state["example"])
-        else:
-            st.session_state["exampleTranslated"] = ""
+        st.session_state["exampleTranslated"] = ""
         st.session_state["state2"] = "answer"
     
     if  st.session_state["state2"] == "answer" or st.session_state["state"] == "feedback":
         st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
-        st.write(st.session_state["exampleTranslated"])
+        
 
     if st.button("Correct"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
+        st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
 
     if st.button("Wrong"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,sheet)
+        st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
     
@@ -225,37 +201,44 @@ with tab3:
     if "sampleWord" not in st.session_state:
         st.session_state["sampleWord"] = sample()
     if "sentence" not in st.session_state:
-        st.session_state["sampleWord"] = sample()
-        sentence, options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0])
+        st.session_state["example"] = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
+        options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0],st.session_state["example"])
         optionsRandomised = randomiseOptions(options)
-        st.session_state["sentence"] = sentence
-        #st.session_state["translation"] = getTranslation(st.session_state["sentence"],"cs-en")
-        st.session_state["options"] = options
-        st.session_state["optionsRandomised"] = np.append(optionsRandomised,"vyber možnost")
-    
-
-    if st.button("Nová věta"):
-        st.session_state["sampleWord"] = sample()
-        sentence, options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0])
-        optionsRandomised = randomiseOptions(options)
-        st.session_state["sentence"] = sentence
-        #st.session_state["translation"] = getTranslation(st.session_state["sentence"],"cs-en")
+        st.session_state["sentence"] = blankWordOut(st.session_state["example"],st.session_state["sampleWord"][0]["Czech"].values[0])
+        st.session_state["translation"] = getTranslation(st.session_state["example"],"cs-en")
         st.session_state["options"] = options
         st.session_state["optionsRandomised"] = np.append(optionsRandomised,"vyber možnost")
         st.session_state["state3"] = "new"
+        st.session_state["explanation"] = explainDeclination(st.session_state["example"],st.session_state["sampleWord"][0]["Czech"].values[0])
+
+    if st.button("Nová věta"):
+        st.session_state["sampleWord"] = sample()
+        st.session_state["example"] = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
+        options = getDeclination(st.session_state["sampleWord"][0]["Czech"].values[0],st.session_state["example"])
+        optionsRandomised = randomiseOptions(options)
+        st.session_state["sentence"] = blankWordOut(st.session_state["example"],st.session_state["sampleWord"][0]["Czech"].values[0])
+        st.session_state["translation"] = getTranslation(st.session_state["example"],"cs-en")
+        st.session_state["options"] = options
+        st.session_state["optionsRandomised"] = np.append(optionsRandomised,"vyber možnost")
+        st.session_state["state3"] = "new"
+        st.session_state["explanation"] = explainDeclination(st.session_state["example"],st.session_state["sampleWord"][0]["Czech"].values[0])
     
     answer = st.radio(st.session_state["sentence"],st.session_state["optionsRandomised"],index=4)
 
-    
+
     if answer == st.session_state["options"][0]:
         st.write("✅ Correct!")
-        #st.write(st.session_state["translation"])        
+        st.image("./happy.jpg",width=100)
+        st.write(st.session_state["translation"])
+        st.write(st.session_state["explanation"])        
         st.audio("./happy.mp3",autoplay=True)
     elif answer == "vyber možnost":
         pass
     else:
         st.write("❌ Try again.")
-        #st.write(st.session_state["translation"])  
+        st.image("./unhappy.jpg",width=100)
+        st.write(st.session_state["translation"])  
+        st.write(st.session_state["explanation"])
         st.audio("./unhappy.mp3",autoplay=True)
 
 
