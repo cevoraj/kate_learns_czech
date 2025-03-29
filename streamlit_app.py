@@ -134,6 +134,9 @@ with tab1:
         st.session_state["state"] = "new"
 
     st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
+    gender = st.session_state["sampleWord"][0]["gender"].values[0]
+    if gender != "":
+        st.write(f"gender: {gender}")
 
     if st.button("Ukaž příklad"):
         example = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
@@ -177,9 +180,10 @@ with tab2:
     if "sampleWord" not in st.session_state:
         st.session_state["sampleWord"] = sample(df)
     if "state2" not in st.session_state:
-        st.session_state["state2"] = "init"
+        st.session_state["state2"] = "new"
     if "example" not in st.session_state:
         st.session_state["example"] = ""
+        st.session_state["exampleTranslated"] = ""
     
 
 
@@ -192,6 +196,9 @@ with tab2:
     if st.button("Show answer"):
         st.session_state["exampleTranslated"] = ""
         st.session_state["state2"] = "answer"
+        gender = st.session_state["sampleWord"][0]["gender"].values[0]
+        if gender != "":
+            st.write(f"gender: {gender}")
     
     if  st.session_state["state2"] == "answer" or st.session_state["state"] == "feedback":
         st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
