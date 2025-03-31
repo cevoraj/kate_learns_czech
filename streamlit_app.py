@@ -21,14 +21,17 @@ client = gspread.service_account_from_dict(gcpCreds)
 
 # Open the Google Sheet
 sheet = client.open('Slovnicek')
-worksheet = sheet.worksheet('Sheet1')
+worksheet = sheet.worksheet('slovicka')
 
 # Read or write data
 df = pd.DataFrame(worksheet.get_all_records())
 
-worksheetDeclination = sheet.worksheet('Sheet2')
+worksheetDeclination = sheet.worksheet('sklonovani-vety')
 # Read or write data
 df_declination = pd.DataFrame(worksheetDeclination.get_all_records())
+
+worksheetVzory = sheet.worksheet('sklonovani-vzory')
+df_vzory = pd.DataFrame(worksheetVzory.get_all_records())
 
 
 
@@ -115,23 +118,56 @@ def updateCase(case,correct,sheetDeclination,sheet):
 
     updateSheet(sheetDeclination,sheet)
 
-tab1, tab2, tab3, tab4 = st.tabs(["Česky-Anglicky", "Anglicky-Česky", "Skloňování", "Přidat slovíčko"])
+def newSample():
+    st.session_state["sampleWord"] = sample(df)
+    st.session_state["example"] = ""
+    st.session_state["exampleTranslated"] = ""
+    st.session_state["state"] = "new"
+    st.session_state["state2"] = "new"
+    st.session_state["state3"] = "new"
+    st.session_state["optionsRandomised"] = []
+    st.session_state["sentence"] = ""
+    st.session_state["translation"] = ""
+    st.session_state["options"] = []
+    st.session_state["explanation"] = ""
 
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Česky-Anglicky", "Anglicky-Česky", "Skloňování  - věty", "Skloňování  - vzory", "Přidat slovíčko"])
+
+# initialize variables if they don't exist yet
+if "sampleWord" not in st.session_state:
+    st.session_state["sampleWord"] = sample(df)
+if "sampleVzor" not in st.session_state:
+    st.session_state["sampleVzor"] = sample(df_vzory)
+if "state" not in st.session_state:
+    st.session_state["state"] = "new"
+if "example" not in st.session_state:
+    st.session_state["example"] = ""
+    st.session_state["exampleTranslated"] = ""
+if "state2" not in st.session_state:
+    st.session_state["state2"] = "new"
+if "state3" not in st.session_state:
+    st.session_state["state3"] = "new"
+if "options" not in st.session_state:
+    st.session_state["options"] = []
+    st.session_state["optionsRandomised"] = []
+if "sentence" not in st.session_state:
+    st.session_state["sentence"] = ""
+if "translation" not in st.session_state:
+    st.session_state["translation"] = ""
+if "explanation" not in st.session_state:
+    st.session_state["explanation"] = ""
+if "case" not in st.session_state:
+    st.session_state["case"] = 0
+        
 
 with tab1:
 
-    if "sampleWord" not in st.session_state:
-        st.session_state["sampleWord"] = sample(df)
-    if "state" not in st.session_state:
-        st.session_state["state"] = "new"
-    if "example" not in st.session_state:
-        st.session_state["example"] = ""
+
     
 
 
     if st.button("Nové slovíčko"):
-        st.session_state["sampleWord"] = sample(df)
-        st.session_state["state"] = "new"
+        newSample()
 
     st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
     gender = st.session_state["sampleWord"][0]["gender"].values[0]
@@ -140,7 +176,6 @@ with tab1:
 
     if st.button("Ukaž příklad"):
         example = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
-        st.write(detectCase(st.session_state["sampleWord"][0]["Czech"].values[0],example))
         st.session_state["example"] = example
         st.session_state["state"] = "example"
     
@@ -177,19 +212,9 @@ with tab1:
 
     
 with tab2:
-    if "sampleWord" not in st.session_state:
-        st.session_state["sampleWord"] = sample(df)
-    if "state2" not in st.session_state:
-        st.session_state["state2"] = "new"
-    if "example" not in st.session_state:
-        st.session_state["example"] = ""
-        st.session_state["exampleTranslated"] = ""
-    
-
 
     if st.button("New word"):
-        st.session_state["sampleWord"] = sample(df)
-        st.session_state["state2"] = "new"
+        newSample()
 
     st.write(st.session_state["sampleWord"][0]["English"].values[0])
         
@@ -224,9 +249,7 @@ with tab2:
        
 
 with tab3:
-    answer = ""
-   
-
+    
     def initSklonovani(df,df_declination):
         case = 15
         sampledCase = 32
@@ -251,46 +274,67 @@ with tab3:
             if case != 0 and case != sampledCase:
                 if case == 0:
                     case = "NOT A NOUN"
-                st.write(f"we've tried to generate a sentence using {sampledCase}th case of the word {czechWord} but it seems like the actual case is {case}")
-                st.write(st.session_state["example"])
-                st.write("trying again...")
+                #st.write(f"we've tried to generate a sentence using {sampledCase}th case of the word {czechWord} but it seems like the actual case is {case}")
+                #st.write(st.session_state["example"])
+                #st.write("trying again...")
             counter += 1
             if counter > 5:
                 st.write("NEDARI SE VYGENEROVAT VĚTU")
                 break
                 
 
-    if "sampleWord" not in st.session_state:
-        st.session_state["sampleWord"] = sample(df)
-    if "sentence" not in st.session_state:
-        initSklonovani(df,df_declination)
-
     if st.button("Nová věta"):
         initSklonovani(df,df_declination)
     
-    answer = st.radio(st.session_state["sentence"],st.session_state["optionsRandomised"],index=4)
+    if len(st.session_state["optionsRandomised"]) != 0:
+        answer = st.radio(st.session_state["sentence"],st.session_state["optionsRandomised"],index=4)
 
 
-    if answer == st.session_state["options"][0]:
-        st.write("✅ Correct!")
-        st.image("./happy.jpg",width=100)
-        st.write(st.session_state["translation"])
-        st.write(st.session_state["explanation"])
-        updateCase(st.session_state['case'],True,df_declination,worksheetDeclination)        
-        st.audio("./happy.mp3",autoplay=True)
-    elif answer == "vyber možnost":
-        pass
-    else:
-        st.write("❌ Try again.")
-        st.image("./unhappy.jpg",width=100)
-        st.write(st.session_state["translation"])  
-        st.write(st.session_state["explanation"])
-        updateCase(st.session_state['case'],False,df_declination,worksheetDeclination)
-        st.audio("./unhappy.mp3",autoplay=True)
-
-
+        if answer == st.session_state["options"][0]:
+            st.write("✅ Correct!")
+            st.image("./happy.jpg",width=100)
+            st.write(st.session_state["translation"])
+            st.write(st.session_state["explanation"])
+            updateCase(st.session_state['case'],True,df_declination,worksheetDeclination)        
+            st.audio("./happy.mp3",autoplay=True)
+        elif answer == "vyber možnost":
+            pass
+        else:
+            st.write("❌ Try again.")
+            st.image("./unhappy.jpg",width=100)
+            st.write(st.session_state["translation"])  
+            st.write(st.session_state["explanation"])
+            updateCase(st.session_state['case'],False,df_declination,worksheetDeclination)
+            st.audio("./unhappy.mp3",autoplay=True)
 
 with tab4:
+    if st.button("Nový vzor"):
+        st.session_state["sampleVzor"] = sample(df_vzory)
+        st.session_state["state"] = "new"
+
+    st.write(st.session_state["sampleVzor"][0]["vzor"].values[0])
+    st.write(st.session_state["sampleVzor"][0]["pad"].values[0])    
+
+        
+    if st.button("Ukaž odpověd!"):
+        st.write(st.session_state["sampleVzor"][0]["sklonovani"].values[0])
+
+
+    if st.button("Dobře!"):
+        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 0.9 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
+        updateSheet(df_vzory,worksheetVzory)
+        st.image("./happy.jpg",width=100)
+        st.audio("./happy.mp3",autoplay=True)
+        st.session_state["state"] = "feedback"
+
+    if st.button("Špatně!"):
+        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 1.1 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
+        updateSheet(df_vzory,worksheetVzory)
+        st.image("./unhappy.jpg",width=100)
+        st.audio("./unhappy.mp3",autoplay=True)
+        st.session_state["state"] = "feedback"
+
+with tab5:
         
         czech = st.text_input("Česky")
         english = st.text_input("Anglicky")
