@@ -160,11 +160,8 @@ if "case" not in st.session_state:
     st.session_state["case"] = 0
         
 
+
 with tab1:
-
-
-    
-
 
     if st.button("Nové slovíčko"):
         newSample()
@@ -201,6 +198,8 @@ with tab1:
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
+        newSample()
+        st.rerun()
 
     if st.button("Špatně"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
@@ -208,6 +207,8 @@ with tab1:
         st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
+        newSample()
+        st.rerun()
     
 
     
@@ -235,6 +236,8 @@ with tab2:
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
+        newSample()
+        st.rerun()
 
     if st.button("Wrong"):
         df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
@@ -242,8 +245,8 @@ with tab2:
         st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
-    
-
+        newSample()
+        st.rerun()
 
     
        
@@ -297,6 +300,8 @@ with tab3:
             st.write(st.session_state["explanation"])
             updateCase(st.session_state['case'],True,df_declination,worksheetDeclination)        
             st.audio("./happy.mp3",autoplay=True)
+            initSklonovani(df,df_declination)
+            st.rerun()
         elif answer == "vyber možnost":
             pass
         else:
@@ -326,6 +331,8 @@ with tab4:
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
+        st.session_state["sampleVzor"] = sample(df_vzory)
+        st.rerun()
 
     if st.button("Špatně!"):
         df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 1.1 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
@@ -333,6 +340,8 @@ with tab4:
         st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
+        st.session_state["sampleVzor"] = sample(df_vzory)
+        st.rerun()
 
 with tab5:
         
@@ -350,3 +359,4 @@ with tab5:
        
             updateSheet(df,worksheet)
             st.write("Slovíčko bylo přidáno")
+            st.rerun()
