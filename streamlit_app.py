@@ -193,7 +193,7 @@ with tab1:
         st.write(st.session_state["exampleTranslated"])
 
     if st.button("Dobře"):
-        df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
+        df["probability"].loc[st.session_state["sampleWord"][1]] = 0.95 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,worksheet)
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
@@ -202,7 +202,7 @@ with tab1:
         st.rerun()
 
     if st.button("Špatně"):
-        df["probability"].loc[st.session_state["sampleWord"][1]] = 1.1 * df["probability"].loc[st.session_state["sampleWord"][1]]
+        df["probability"].loc[st.session_state["sampleWord"][1]] = 1.5 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,worksheet)
         st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
@@ -231,7 +231,7 @@ with tab2:
         
 
     if st.button("Correct"):
-        df["probability"].loc[st.session_state["sampleWord"][1]] = 0.9 * df["probability"].loc[st.session_state["sampleWord"][1]]
+        df["probability"].loc[st.session_state["sampleWord"][1]] = 0.95 * df["probability"].loc[st.session_state["sampleWord"][1]]
         updateSheet(df,worksheet)
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
@@ -326,7 +326,7 @@ with tab4:
 
 
     if st.button("Dobře!"):
-        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 0.9 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
+        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 0.95 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
         updateSheet(df_vzory,worksheetVzory)
         st.image("./happy.jpg",width=100)
         st.audio("./happy.mp3",autoplay=True)
@@ -335,7 +335,7 @@ with tab4:
         st.rerun()
 
     if st.button("Špatně!"):
-        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 1.1 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
+        df_vzory["probability"].loc[st.session_state["sampleVzor"][1]] = 1.2 * df_vzory["probability"].loc[st.session_state["sampleVzor"][1]]
         updateSheet(df_vzory,worksheetVzory)
         st.image("./unhappy.jpg",width=100)
         st.audio("./unhappy.mp3",autoplay=True)
