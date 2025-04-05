@@ -6,6 +6,7 @@ from openai import OpenAI
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
+import time
 
 
 # Define the scope
@@ -200,6 +201,7 @@ with tab1:
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
         newSample(st.session_state["slovicka_df"])
+        time.sleep(3)
         st.rerun()
 
     if st.button("Špatně"):
@@ -209,6 +211,7 @@ with tab1:
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
         newSample(st.session_state["slovicka_df"])
+        time.sleep(3)
         st.rerun()
     
 
@@ -239,6 +242,7 @@ with tab2:
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
         newSample(st.session_state["slovicka_df"])
+        time.sleep(3)
         st.rerun()
 
     if st.button("Wrong"):
@@ -248,6 +252,7 @@ with tab2:
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state2"] = "feedback"
         newSample(st.session_state["slovicka_df"])
+        time.sleep(3)
         st.rerun()
 
     
@@ -303,6 +308,7 @@ with tab3:
             updateCase(st.session_state['case'],True,st.session_state["declination_df"],st.session_state["declination_worksheet"])        
             st.audio("./happy.mp3",autoplay=True)
             initSklonovani(df,st.session_state["declination_df"])
+            time.sleep(3)
             st.rerun()
         elif answer == "vyber možnost":
             pass
@@ -334,6 +340,7 @@ with tab4:
         st.audio("./happy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
         st.session_state["sampleVzor"] = sample(st.session_state["vzory_df"])
+        time.sleep(3)
         st.rerun()
 
     if st.button("Špatně!"):
@@ -343,6 +350,7 @@ with tab4:
         st.audio("./unhappy.mp3",autoplay=True)
         st.session_state["state"] = "feedback"
         st.session_state["sampleVzor"] = sample(st.session_state["vzory_df"])
+        time.sleep(3)
         st.rerun()
 
 with tab5:
