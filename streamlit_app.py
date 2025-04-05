@@ -225,8 +225,8 @@ with tab2:
         st.session_state["state2"] = "answer"
         gender = st.session_state["sampleWord"][0]["gender"].values[0]
         vzor = st.session_state["sampleWord"][0]["vzor"].values[0]
-    if gender != "":
-        st.write(f"rod: {gender}, vzor: {vzor}")
+        if gender != "":
+            st.write(f"rod: {gender}, vzor: {vzor}")
     
     if  st.session_state["state2"] == "answer" or st.session_state["state"] == "feedback":
         st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
