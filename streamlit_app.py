@@ -168,8 +168,9 @@ with tab1:
 
     st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
     gender = st.session_state["sampleWord"][0]["gender"].values[0]
+    vzor = st.session_state["sampleWord"][0]["vzor"].values[0]
     if gender != "":
-        st.write(f"gender: {gender}")
+        st.write(f"rod: {gender}, vzor: {vzor}")
 
     if st.button("Ukaž příklad"):
         example = getExample(st.session_state["sampleWord"][0]["Czech"].values[0])
@@ -223,8 +224,9 @@ with tab2:
         st.session_state["exampleTranslated"] = ""
         st.session_state["state2"] = "answer"
         gender = st.session_state["sampleWord"][0]["gender"].values[0]
-        if gender != "":
-            st.write(f"gender: {gender}")
+        vzor = st.session_state["sampleWord"][0]["vzor"].values[0]
+    if gender != "":
+        st.write(f"rod: {gender}, vzor: {vzor}")
     
     if  st.session_state["state2"] == "answer" or st.session_state["state"] == "feedback":
         st.write(st.session_state["sampleWord"][0]["Czech"].values[0])
@@ -348,14 +350,15 @@ with tab5:
         czech = st.text_input("Česky")
         english = st.text_input("Anglicky")
         gender = st.text_input("rod m/f/n")
+        vzor = st.text_input("vzor")
         if st.button("Přidat"):
 
 
             # New row as a DataFrame
-            new_row = pd.DataFrame({'English': english, 'Type': "", 'Example': "", 'Czech': czech, 'probability': 1, 'gender': gender}, index=[0])
+            new_row = pd.DataFrame({'English': english, 'Type': "", 'Example': "", 'Czech': czech, 'probability': 1, 'gender': gender, 'vzor': vzor}, index=[0])
 
             # Append new row
-            df = pd.concat([df, new_row], ignore_index=True)
+            df = pd.concat([st.session_state["slovicka_df"], new_row], ignore_index=True)
        
             updateSheet(df,st.session_state["slovicka_worksheet"])
             st.write("Slovíčko bylo přidáno")
